@@ -6,8 +6,15 @@ import '../cubits/cubit/call_cubit.dart';
 import '../cubits/cubit/call_state.dart';
 import 'end_call_screen.dart';
 
-class CallPage extends StatelessWidget {
+class CallPage extends StatefulWidget {
   const CallPage({super.key});
+
+  @override
+  State<CallPage> createState() => _CallPageState();
+}
+
+class _CallPageState extends State<CallPage> {
+  Offset _pipOffset = const Offset(10, 400);
 
   @override
   Widget build(BuildContext context) {
@@ -21,126 +28,193 @@ class CallPage extends StatelessWidget {
               if (state is CallLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
-
               if (state is CallError) {
                 return Center(child: Text(state.message));
               }
 
               if (state is CallJoined) {
                 final call = state.call;
-                final localParticipant = call.state.value.localParticipant;
 
-                return Stack(
-                  children: [
-                    // Full screen video content
-                    Positioned.fill(
-                      child: StreamCallContainer(
-                        call: call,
-                        callContentBuilder: (context, call, callState) {
-                          return StreamVideoRenderer(
-                            videoTrackType: SfuTrackType
-                                .video, // Add this required parameter
+                return StreamCallContainer(
+                  call: call,
+                  callContentBuilder: (context, call, callState) {
+                    final local = callState.localParticipant;
+                    final remotes = callState.callParticipants
+                        .where((p) => !p.isLocal)
+                        .toList();
 
-                            call: call,
-                            participant: callState.localParticipant!,
-                          );
-                        },
-                      ),
-                    ),
+                    final remote = remotes.isNotEmpty ? remotes.first : null;
 
-                    // Overlay controls
-                    Positioned(
-                      bottom: 20,
-                      left: 0,
-                      right: 0,
-                      child: StreamCallControls(
-                        options: [
-                          LeaveCallOption(
-                            call: call,
-                            onLeaveCallTap: () {
-                              context.read<MakeCallCubit>().leaveCall(call);
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const EndCallPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          CallControlOption(
-                            icon: const Icon(Icons.people_alt_rounded),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    insetPadding: const EdgeInsets.all(20),
-                                    title: const Text('Participants'),
-                                    content: SingleChildScrollView(
-                                      child: ListBody(
-                                        children: call
-                                            .state
-                                            .value
-                                            .callParticipants
-                                            .map(
-                                              (p) => Row(
-                                                children: [
-                                                  Icon(
-                                                    p.isLocal
-                                                        ? Icons.person
-                                                        : Icons.person_outline,
-                                                    color: p.isLocal
-                                                        ? Colors.purple
-                                                        : Colors.grey,
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                  Expanded(child: Text(p.name)),
-                                                ],
-                                              ),
-                                            )
-                                            .toList(),
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: remote != null
+                              ? StreamVideoRenderer(
+                                  call: call,
+                                  participant: remote,
+                                  videoTrackType: SfuTrackType.video,
+                                )
+                              : Container(
+                                  color: Colors.black,
+                                  child: const Center(
+                                    child: Text(
+                                      "Waiting for remote participant...",
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 18,
                                       ),
                                     ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                          FlipCameraOption(
-                            call: call,
-                            localParticipant: localParticipant,
-                          ),
-                          ToggleMicrophoneOption(
-                            call: call,
-                            localParticipant: localParticipant,
-                          ),
-                          ToggleCameraOption(
-                            call: call,
-                            localParticipant: localParticipant,
-                          ),
-                          AddReactionOption(
-                            call: call,
-                            localParticipant: localParticipant,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Top app bar (optional)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: AppBar(
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        title: Text(
-                          'Welcome ${localParticipant?.name ?? "Guest"}',
-                          style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
                         ),
-                      ),
-                    ),
-                  ],
+
+                        if (local != null)
+                          Positioned(
+                            left: _pipOffset.dx,
+                            top: _pipOffset.dy,
+                            child: GestureDetector(
+                              onPanUpdate: (details) {
+                                setState(() {
+                                  _pipOffset += details.delta;
+                                });
+                              },
+                              child: Container(
+                                width: 120,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: StreamVideoRenderer(
+                                    call: call,
+                                    participant: local,
+                                    videoTrackType: SfuTrackType.video,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        Positioned(
+                          bottom: 20,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildControlButton(
+                                icon: local?.isVideoEnabled == true
+                                    ? Icons.videocam
+                                    : Icons.videocam_off,
+                                color: Colors.white,
+                                iconColor: local?.isVideoEnabled == true
+                                    ? Colors.black
+                                    : Colors.red,
+                                onPressed: () async {
+                                  final isEnabled =
+                                      local?.isVideoEnabled ?? false;
+                                  await call.setCameraEnabled(
+                                    enabled: !isEnabled,
+                                  );
+                                  setState(() {});
+                                },
+                              ),
+
+                              const SizedBox(width: 20),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.red.withOpacity(0.2),
+                                ),
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.red,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.call_end_outlined,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: () {
+                                      context.read<MakeCallCubit>().leaveCall(
+                                        call,
+                                      );
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const EndCallPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 20),
+
+                              _buildControlButton(
+                                icon: local?.isAudioEnabled == true
+                                    ? Icons.mic
+                                    : Icons.mic_off,
+                                color: Colors.white,
+                                iconColor: local?.isAudioEnabled == true
+                                    ? Colors.black
+                                    : Colors.red,
+                                onPressed: () async {
+                                  final isEnabled =
+                                      local?.isAudioEnabled ?? false;
+                                  await call.setMicrophoneEnabled(
+                                    enabled: !isEnabled,
+                                  );
+                                  setState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    context.read<MakeCallCubit>().leaveCall(
+                                      call,
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.flip_camera_ios_outlined,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => call.flipCamera(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 );
               }
 
@@ -151,4 +225,25 @@ class CallPage extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildControlButton({
+  required IconData icon,
+  required Color color,
+  required Color iconColor,
+  required VoidCallback onPressed,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color,
+      shape: BoxShape.circle,
+      boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6),
+      ],
+    ),
+    child: IconButton(
+      icon: Icon(icon, color: iconColor),
+      onPressed: onPressed,
+    ),
+  );
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:group_video_app/views/contacts_view.dart';
 import 'package:stream_video_flutter/stream_video_flutter.dart';
 
 import 'constants.dart';
-import 'views/contacts_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,6 +10,7 @@ void main() async {
   StreamVideo(
     apiKey,
     user: User.regular(userId: userId, role: 'admin', name: "user $userName"),
+
     userToken: userToken,
   );
 
