@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:group_video_app/views/call_screen.dart';
 import 'package:stream_video_flutter/stream_video_flutter.dart';
 
 import 'constants.dart';
+import 'views/contacts_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   StreamVideo(
     apiKey,
     user: User.regular(userId: userId, role: 'admin', name: "user $userName"),
-
     userToken: userToken,
   );
 
@@ -21,6 +21,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: CallPage());
+    return MaterialApp(debugShowCheckedModeBanner: false, home: ContactsView());
   }
 }
