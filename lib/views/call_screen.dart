@@ -44,22 +44,6 @@ class CallPage extends StatelessWidget {
                       callControlsBuilder: (context, call, _) {
                         return StreamCallControls(
                           options: [
-                            FlipCameraOption(
-                              call: call,
-                              localParticipant: localParticipant,
-                            ),
-                            AddReactionOption(
-                              call: call,
-                              localParticipant: localParticipant,
-                            ),
-                            ToggleMicrophoneOption(
-                              call: call,
-                              localParticipant: localParticipant,
-                            ),
-                            ToggleCameraOption(
-                              call: call,
-                              localParticipant: localParticipant,
-                            ),
                             LeaveCallOption(
                               call: call,
                               onLeaveCallTap: () {
@@ -71,6 +55,72 @@ class CallPage extends StatelessWidget {
                                   ),
                                 );
                               },
+                            ),
+                            CallControlOption(
+                              icon: const Icon(Icons.people_alt_rounded),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      insetPadding: const EdgeInsets.all(20),
+                                      title: const Text('Participants'),
+                                      content: SingleChildScrollView(
+                                        child: ListBody(
+                                          children: call
+                                              .state
+                                              .value
+                                              .callParticipants
+                                              .map(
+                                                (p) => Row(
+                                                  children: [
+                                                    Icon(
+                                                      p.isLocal
+                                                          ? Icons.person
+                                                          : Icons
+                                                                .person_outline,
+                                                      color: p.isLocal
+                                                          ? Colors.purple
+                                                          : Colors.grey,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Text(p.name),
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                              .toList(),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                          child: const Text('Close'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                            FlipCameraOption(
+                              call: call,
+                              localParticipant: localParticipant,
+                            ),
+
+                            ToggleMicrophoneOption(
+                              call: call,
+                              localParticipant: localParticipant,
+                            ),
+                            ToggleCameraOption(
+                              call: call,
+                              localParticipant: localParticipant,
+                            ),
+                            AddReactionOption(
+                              call: call,
+                              localParticipant: localParticipant,
                             ),
                           ],
                         );
