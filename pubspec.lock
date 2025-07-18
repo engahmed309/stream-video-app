@@ -694,18 +694,18 @@ packages:
     dependency: transitive
     description:
       name: stream_video
-      sha256: "24c4662cae586d5a7c4faeb62525e215a57224a77a6f6bf92ec9bbd566ba8bde"
+      sha256: "09b5217fb389b92b798513c00bbf45287be59ba4bd8747e2ffc46462fe557ece"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.0"
+    version: "0.10.1"
   stream_video_flutter:
     dependency: "direct main"
     description:
       name: stream_video_flutter
-      sha256: c09e61239d6df9fd3156b311fbf5be27c0c95b2e5a45f7f813ae0ffa9f270d69
+      sha256: "0d619165ecb5ae33c967f90a0e38a1deed9179e786743639e527d97b739b454d"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.0"
+    version: "0.10.1"
   stream_webrtc_flutter:
     dependency: transitive
     description:
