@@ -6,7 +6,6 @@ import 'constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   StreamVideo(
     apiKey,
     user: User.regular(userId: userId, role: 'admin', name: "user $userName"),
